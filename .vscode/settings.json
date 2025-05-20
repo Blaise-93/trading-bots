@@ -1,0 +1,11 @@
+{
+    "python.analysis.extraPaths": [
+        "/mnt/c/Users/USER/OneDrive/Desktop/Django/trading-bots/env/lib/python3.10/site-packages"
+    ],
+    "python.defaultInterpreterPath": "/mnt/c/Users/USER/OneDrive/Desktop/Django/trading-bots/env/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true
+}
+
+
+
