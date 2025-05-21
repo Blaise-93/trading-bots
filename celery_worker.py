@@ -1,7 +1,7 @@
 import os
 import requests
 from celery import Celery
-from endpoints import *
+from endpoints import BASE_URL, API_KEY
 from logging import getLogger
 
 
@@ -25,7 +25,7 @@ def check_bot_status(bot_id: int):
         dict : The latest bot status from 3Commas API
 
     '''
-    url = f'{BASE_URL}/verl/bots/{bot_id}'
+    url = f'{BASE_URL}/ver1/bots/{bot_id}'
     headers = {'Authorization': f'Bearer {API_KEY}'}
 
     try:
@@ -33,7 +33,7 @@ def check_bot_status(bot_id: int):
         if response.status_code == 200:
             return response.json()
     except Exception as e:
-        logging.warning(f'Unkown error occured: {e}')
+        logging.error(f'Unkown error occured: {e}')
 
 
 @celery_app.task

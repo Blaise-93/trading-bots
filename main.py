@@ -2,7 +2,11 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from logging import getLogger
 from pathlib import Path
 import requests
-from endpoints import API_KEY, BASE_URL
+from endpoints import (
+    API_KEY, BASE_URL,
+    LIVE_ACCOUNT_ID,
+    PAPER_ACCOUNT_ID
+)
 from celery_worker import check_bot_status
 from sqlalchemy.orm import Session
 from models import TradingBot, BotCreateRequest
@@ -20,20 +24,6 @@ app = FastAPI(
 )
 
 
-def find_post(id, bots):
-    for bot in bots:
-        if bot['id'] == id:
-            print(bot)
-            return bot
-
-
-def find_index_post(id, bots):
-
-    for i, post in enumerate(bots):
-        if post['id'] == id:
-            return i
-
-
 @app.get('/')
 def starting_point():
     ''' Root of the project for testing purpose'''
@@ -41,7 +31,7 @@ def starting_point():
     return {'message': 'Welcome to the 3Commas Trading Bot API'}
 
 
-@app.post("/create-bot")
+@app.post("/create-bot", status_code=status.HTTP_201_CREATED)
 def create_bot(request: BotCreateRequest, db: Session = Depends(get_db)):
     """
     Creates a trading bot using the 3Commas API and saves it in the database.
@@ -56,6 +46,10 @@ def create_bot(request: BotCreateRequest, db: Session = Depends(get_db)):
     url = f"{BASE_URL}/ver1/bots/create_bot"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     payload = request.dict()
+    # Update the account id
+    # Alter this for either live or paper trading
+    payload['account_id'] = PAPER_ACCOUNT_ID
+    payload['strategy'] = 'dca'
     try:
         response = requests.post(url, json=payload, headers=headers)
         print(response.text)
@@ -119,7 +113,9 @@ def update_profit(bot_id: int, profit: float, db: Session = Depends(get_db)):
 
     bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
     if not bot:
-        return {'message': 'Bot not found'}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'post with id: {bot_id} not found')
     bot.profit_made += profit
     db.commit()
     logging.info(f'Profit made on this bot id: {bot_id}')
