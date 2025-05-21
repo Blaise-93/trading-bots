@@ -24,7 +24,7 @@ app = FastAPI(
 )
 
 
-@app.get('/')
+@app.get('/account')
 def starting_point():
     ''' Root of the project for testing purpose'''
 
@@ -32,7 +32,7 @@ def starting_point():
 
 
 @app.post("/create-bot", status_code=status.HTTP_201_CREATED)
-def create_bot(request: BotCreateRequest, db: Session = Depends(get_db)):
+def create_bot(db: Session = Depends(get_db)):
     """
     Creates a trading bot using the 3Commas API and saves it in the database.
 
@@ -45,11 +45,23 @@ def create_bot(request: BotCreateRequest, db: Session = Depends(get_db)):
     # Call 3Commas API
     url = f"{BASE_URL}/ver1/bots/create_bot"
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    payload = request.dict()
-    # Update the account id
-    # Alter this for either live or paper trading
-    payload['account_id'] = PAPER_ACCOUNT_ID
-    payload['strategy'] = 'dca'
+    # For dynamic rendering,
+    #  We can use basemodel, Botcreaterequest class for this
+    payload = {
+        "name": "Test Bot",
+        "account_id": PAPER_ACCOUNT_ID,
+        "pairs": ["BTC_USDT"],
+        "strategy": "dca",
+        "base_order_volume": 10,
+        "take_profit": 1.5,
+        "safety_order_volume": 5,
+        "martingale_volume_coefficient": 1.05,
+        "martingale_step_coefficient": 1.02,
+        "max_safety_orders": 3,
+        "active_safety_orders_count": 1,
+        "safety_order_step_percentage": 2.0,
+        "take_profit_type": "percentage"
+    }
     try:
         response = requests.post(url, json=payload, headers=headers)
         print(response.text)
