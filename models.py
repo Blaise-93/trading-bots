@@ -1,3 +1,4 @@
+from typing import List, Optional, Dict
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
@@ -28,20 +29,37 @@ class TradingBot(Base):
     take_profit_type = Column(String, default='percentage')
 
 
+class StrategyItem(BaseModel):
+    strategy: str
+    options: Dict
+
+
 class BotCreateRequest(BaseModel):
     '''Bot creation request schema for data validation'''
     name: str
-    strategy: str
-    base_order_size: float
-    safety_order_size: float
     account_id: int
-    pairs: list
-    base_order_volume: int
-    take_profit: float
-    safety_order_volume: float
-    martingale_volume_coefficient: float
-    martingale_step_coefficient: float
+    is_enabled: Optional[bool] = False
     max_safety_orders: int
     active_safety_orders_count: int
-    safety_order_step_percentage: float
+    pairs: List[str]
+    strategy_list: List[StrategyItem]
+    close_strategy_list: List[Dict] = []
+    safety_strategy_list: List[Dict] = []
+    max_active_deals: int
+    active_deals_count: int
+    take_profit: float
     take_profit_type: str
+    base_order_volume: float
+    safety_order_volume: float
+    safety_order_step_percentage: float
+    martingale_volume_coefficient: float
+    martingale_step_coefficient: float
+    stop_loss_percentage: float
+    cooldown: int
+    btc_price_limit: float
+    strategy: str
+    profit_currency: str
+    stop_loss_type: str
+    safety_order_volume_type: str
+    base_order_volume_type: str
+    trailing_deviation: Optional[float] = None

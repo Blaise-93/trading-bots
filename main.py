@@ -24,20 +24,19 @@ app = FastAPI(
 )
 
 
-@app.get('/account')
+@app.get('/')
 def starting_point():
     ''' Root of the project for testing purpose'''
 
-    return {'message': 'Welcome to the 3Commas Trading Bot API'}
+    return {'message': 'Welcome to my 3Commas Trading Bot API'}
 
 
 @app.post("/create-bot", status_code=status.HTTP_201_CREATED)
 def create_bot(db: Session = Depends(get_db)):
     """
     Creates a trading bot using the 3Commas API and saves it in the database.
-
-    Args:
-        request (BotCreateRequest): Request body with bot details.
+    We shall be employing DCA. The DCA Bot allows users to automate trading
+    on the exchange by following a Dollar Cost Averaging strategy.
 
     Returns:
         dict: API response stored in the database.
@@ -45,24 +44,42 @@ def create_bot(db: Session = Depends(get_db)):
     # Call 3Commas API
     url = f"{BASE_URL}/ver1/bots/create_bot"
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    # For dynamic rendering,
-    #  We can use basemodel, Botcreaterequest class for this
+    # Payload of the post request
     payload = {
-        "name": "Test Bot",
+        "name": "Auto Bot",
         "account_id": PAPER_ACCOUNT_ID,
-        "pairs": ["BTC_USDT"],
-        "strategy": "dca",
-        "base_order_volume": 10,
-        "take_profit": 1.5,
-        "safety_order_volume": 5,
-        "martingale_volume_coefficient": 1.05,
-        "martingale_step_coefficient": 1.02,
-        "max_safety_orders": 3,
+        "is_enabled": False,
+        "max_safety_orders": 4,
         "active_safety_orders_count": 1,
-        "safety_order_step_percentage": 2.0,
-        "take_profit_type": "percentage"
+        "pairs": ["BTC_USDT"],
+        "strategy_list": [{"strategy": "nonstop", "options": {}}],
+        "close_strategy_list": [],
+        "safety_strategy_list": [],
+        "max_active_deals": 1,
+        "active_deals_count": 0,
+        "take_profit": 2.0,
+        "take_profit_type": "total",
+        "base_order_volume": 15.0,
+        "safety_order_volume": 30.0,
+        "safety_order_step_percentage": 1.0,
+        "martingale_volume_coefficient": 2.0,
+        "martingale_step_coefficient": 4.0,
+        "stop_loss_percentage": 0.0,
+        "cooldown": 0,
+        "btc_price_limit": 0.0,
+        "strategy": "long",
+        "profit_currency": "quote_currency",
+        "stop_loss_type": "stop_loss",
+        "safety_order_volume_type": "quote_currency",
+        "base_order_volume_type": "quote_currency",
+        "trailing_deviation": 0.2
     }
+
+
+#  We can use basemodel, Botcreaterequest class for this
+
     try:
+
         response = requests.post(url, json=payload, headers=headers)
         print(response.text)
         if response.status_code == 200:
@@ -77,9 +94,24 @@ def create_bot(db: Session = Depends(get_db)):
                 strategy=bot_data.get("strategy"),
                 base_order_size=bot_data.get("base_order_size"),
                 safety_order_size=bot_data.get("safety_order_size"),
-                profit_made=bot_data.get("profit", 0.0)
-            )
+                profit_made=bot_data.get("profit", 0.0),
+                base_order_volume=bot_data.get('base_order_volume'),
+                take_profit=bot_data.get('take_profit'),
+                safety_order_volume=bot_data.get('safety_order_volume'),
+                martingale_volume_coefficient=bot_data.get(
+                    'martingale_volume_coefficient'),
+                martingale_step_coefficient=bot_data.get(
+                    'martingale_step_coefficient'),
+                max_safety_order=bot_data.get('max_safety_order'),
+                active_safety_orders_count=bot_data.get(
+                    'active_safety_orders_count'),
+                safety_order_step_percentage=bot_data.get(
+                    'safety_order_step_percentage'),
+                take_profit_type=bot_data.get('take_profit_type'),
 
+
+            )
+            # Save to bot data db
             db.add(bot)
             db.commit()
             db.refresh(bot)
